@@ -3,39 +3,35 @@ from lmfit import models
 import numpy as np
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("")
+pieken = [0.00351, 0.00952, 0.01313]
+pieken_err = [0.00005, 0.00001, 0.00009]
 
-minima = []
-maxima = []
+# F = 1 --> F = 0
+transition_1to0 = 4.271676631815181 + 384230.4844685 - 0.3020738
+transition_1to0_err = np.sqrt(
+    0.00000000000000056 ** 2 + 0.000000062 ** 2 + 0.000000088 ** 2
+)
 
-for i in range(len(df["volt"])):
-    if i > 4 and i < len(df["volt"]) - 4:
-        neighbourhood = [
-            df["volt"][i - 3],
-            df["volt"][i - 2],
-            df["volt"][i - 1],
-            df["volt"][i],
-            df["volt"][i + 1],
-            df["volt"][i + 2],
-            df["volt"][i + 3],
-        ]
-        neighbourhood_t = [
-            df["time"][i - 3],
-            df["time"][i - 2],
-            df["time"][i - 1],
-            df["time"][i],
-            df["time"][i + 1],
-            df["time"][i + 2],
-            df["time"][i + 3],
-        ]
-        if neighbourhood[0] > min(neighbourhood) and neighbourhood[6] > min(
-            neighbourhood
-        ):
-            minima.append(neighbourhood_t[neighbourhood.index(min(neighbourhood))])
-        elif neighbourhood[0] < max(neighbourhood) and neighbourhood[6] < max(
-            neighbourhood
-        ):
-            maxima.append(neighbourhood_t[neighbourhood.index(max(neighbourhood))])
+# F = 1 --> F = 2
+transition_1to2 = 4.271676631815181 + 384230.4844685 - 0.0729112
+transition_1to2_err = np.sqrt(
+    0.00000000000000056 ** 2 + 0.000000062 ** 2 + 0.000000032 ** 2
+)
 
-print(minima)
-print(maxima)
+delta_f = abs(transition_1to0 - transition_1to2)
+delta_f_err = np.sqrt(transition_1to0_err ** 2 + transition_1to2_err ** 2)
+
+delta_t = abs(pieken[0] - pieken[2])
+delta_t_err = np.sqrt(pieken_err[0] ** 2 + pieken_err[2] ** 2)
+
+print(f"transition_1to0 = {transition_1to0} +- {transition_1to0_err} GHz")
+print(f"transition_1to2 = {transition_1to2} +- {transition_1to2_err} GHz")
+print(f"delta_f = {delta_f} +- {delta_f_err} GHz")
+print(f"delta_t = {delta_t} +- {delta_t_err} s")
+
+calib = delta_f / delta_t
+calib_err = np.sqrt(
+    (delta_f_err / delta_t) ** 2 + (delta_f * delta_t_err / (delta_t ** 2)) ** 2
+)
+
+print(f"calib = {calib} +- {calib_err} GHz / s")
