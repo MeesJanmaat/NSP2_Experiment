@@ -10,7 +10,7 @@ model = (
     + models.GaussianModel(prefix="g3_")
 )
 
-df = pd.read_csv("../data/ijking2/F0001CH1.csv", delimiter=",", decimal=".")
+df = pd.read_csv("ALL0000/F0000CH1.csv", delimiter=",", decimal=".")
 
 df["volt_err"] = df["volt"] * 0.03
 
