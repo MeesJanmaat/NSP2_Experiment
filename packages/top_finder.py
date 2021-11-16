@@ -4,7 +4,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def find_tops(filename, show_plot):
+def find_tops(filename, show_plot=False):
+    """Finds peaks given filename of csv containing data.
+
+    Args:
+        filename (string): name of csv file
+        show_plot (bool) [optional]: show plot of data with vertical lines where the peaks are. Defaults to False.
+
+    Returns:
+        (tuple): tuple containing:
+            minima_c (list): list of centres of minima found
+            minima_c_err (list): list of errors of minima found
+            maxima_c (list): list of centres of maxima found
+            maxima_c_err (list): list of errors of maxima found
+    """
     df = pd.read_csv(filename)
 
     minima = []
@@ -83,8 +96,8 @@ def find_tops(filename, show_plot):
     return (minima_c, minima_c_err, maxima_c, maxima_c_err)
 
 
-print("IJKING:")
-find_tops("metingen 15-11-21/ALL0001/F0001CH1.csv", True)
+# print("IJKING:")
+# find_tops("metingen 15-11-21/ALL0001/F0001CH1.csv", True)
 
-print("METING:")
-find_tops("metingen 15-11-21/ALL0002/F0002CH3.csv", True)
+# print("METING:")
+# find_tops("metingen 15-11-21/ALL0002/F0002CH3.csv", True)

@@ -2,6 +2,8 @@ import pandas as pd
 from lmfit import models
 import numpy as np
 import matplotlib.pyplot as plt
+from packages import top_finder
 
-piek = [0.00351, 0.00952, 0.01313]
-piek_err = [0.00005, 0.00001, 0.00009]
+minima, minima_err, maxima, maxima_err = top_finder.find_tops(
+    "metingen 15-11-21/ALL0002/F0002CH3.csv", True
+)
