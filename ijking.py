@@ -2,9 +2,11 @@ import pandas as pd
 from lmfit import models
 import numpy as np
 import matplotlib.pyplot as plt
+from packages import top_finder
 
-pieken = [0.00351, 0.00952, 0.01313]
-pieken_err = [0.00005, 0.00001, 0.00009]
+minima, minima_err, maxima, maxima_err = top_finder.find_tops(
+    "metingen 15-11-21/ALL0001/F0001CH1.csv", False
+)
 
 # F = 1 --> F = 0
 transition_1to0 = 4.271676631815181 + 384230.4844685 - 0.3020738
@@ -21,8 +23,8 @@ transition_1to2_err = np.sqrt(
 delta_f = abs(transition_1to0 - transition_1to2)
 delta_f_err = np.sqrt(transition_1to0_err ** 2 + transition_1to2_err ** 2)
 
-delta_t = abs(pieken[0] - pieken[2])
-delta_t_err = np.sqrt(pieken_err[0] ** 2 + pieken_err[2] ** 2)
+delta_t = abs(maxima[0] - maxima[2])
+delta_t_err = np.sqrt(maxima_err[0] ** 2 + maxima_err[2] ** 2)
 
 print(f"transition_1to0 = {transition_1to0} +- {transition_1to0_err} GHz")
 print(f"transition_1to2 = {transition_1to2} +- {transition_1to2_err} GHz")
