@@ -89,15 +89,54 @@ def find_tops(filename, show_plot=False):
         plt.scatter(df["time"], df["volt"], s=2)
         for m in minima_c:
             plt.axvline(m, c="blue")
+            plt.text(m, 1, str(minima_c.index(m)))
         for m in maxima_c:
             plt.axvline(m, c="red")
+            plt.text(m, 1, str(maxima_c.index(m)))
         plt.show()
 
     return (minima_c, minima_c_err, maxima_c, maxima_c_err)
 
 
-# print("IJKING:")
-# find_tops("metingen 15-11-21/ALL0001/F0001CH1.csv", True)
+def calibrate(filename):
+    """Calibrates ratio of seconds on oscilloscope to frequency (energy) given a dataset to calibrate with the F = 1 --> F = 0 and F = 1 --> F = 2 transitions.
 
-# print("METING:")
-# find_tops("metingen 15-11-21/ALL0002/F0002CH3.csv", True)
+    Args:
+        filename (string): name of csv file
+
+    Returns:
+        (tuple): tuple containing:
+            calib (float): calibration value in GHz/s or MHz/ms
+            calib_err (float): calibration value error in GHz/s or MHz/ms"""
+    minima, minima_err, maxima, maxima_err = find_tops(filename)
+
+    # F = 1 --> F = 0
+    transition_1to0 = 4.271676631815181 + 384230.4844685 - 0.3020738
+    transition_1to0_err = np.sqrt(
+        0.00000000000000056 ** 2 + 0.000000062 ** 2 + 0.000000088 ** 2
+    )
+
+    # F = 1 --> F = 2
+    transition_1to2 = 4.271676631815181 + 384230.4844685 - 0.0729112
+    transition_1to2_err = np.sqrt(
+        0.00000000000000056 ** 2 + 0.000000062 ** 2 + 0.000000032 ** 2
+    )
+
+    delta_f = abs(transition_1to0 - transition_1to2)
+    delta_f_err = np.sqrt(transition_1to0_err ** 2 + transition_1to2_err ** 2)
+
+    delta_t = abs(maxima[0] - maxima[2])
+    delta_t_err = np.sqrt(maxima_err[0] ** 2 + maxima_err[2] ** 2)
+
+    # print(f"transition_1to0 = {transition_1to0} +- {transition_1to0_err} GHz")
+    # print(f"transition_1to2 = {transition_1to2} +- {transition_1to2_err} GHz")
+    # print(f"delta_f = {delta_f} +- {delta_f_err} GHz")
+    # print(f"delta_t = {delta_t} +- {delta_t_err} s")
+
+    calib = delta_f / delta_t
+    calib_err = np.sqrt(
+        (delta_f_err / delta_t) ** 2 + (delta_f * delta_t_err / (delta_t ** 2)) ** 2
+    )
+
+    print(f"[calibrate()] calibration = {calib} +- {calib_err} GHz / s")
+    return (calib, calib_err)
