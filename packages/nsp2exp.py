@@ -42,9 +42,6 @@ def find_tops(filename, show_plot=False):
             ):
                 maxima.append(neighbourhood_t[len(neighbourhood) // 2])
 
-    print(minima)
-    print(maxima)
-
     minima_c = []
     maxima_c = []
     minima_c_err = []
@@ -89,10 +86,10 @@ def find_tops(filename, show_plot=False):
         plt.scatter(df["time"], df["volt"], s=2)
         for m in minima_c:
             plt.axvline(m, c="blue")
-            plt.text(m, 1, str(minima_c.index(m)))
+            plt.text(m, 0.6, str(minima_c.index(m)))
         for m in maxima_c:
             plt.axvline(m, c="red")
-            plt.text(m, 1, str(maxima_c.index(m)))
+            plt.text(m, 0.6, str(maxima_c.index(m)))
         plt.show()
 
     return (minima_c, minima_c_err, maxima_c, maxima_c_err)
@@ -108,7 +105,10 @@ def calibrate(filename):
         (tuple): tuple containing:
             calib (float): calibration value in GHz/s or MHz/ms
             calib_err (float): calibration value error in GHz/s or MHz/ms"""
-    minima, minima_err, maxima, maxima_err = find_tops(filename)
+    minima, minima_err, maxima, maxima_err = find_tops(filename, True)
+
+    peak1 = int(input("Type the number of the peak that corresponds to F=1 ---> F=0: "))
+    peak2 = int(input("Type the number of the peak that corresponds to F=1 ---> F=2: "))
 
     # F = 1 --> F = 0
     transition_1to0 = 4.271676631815181 + 384230.4844685 - 0.3020738
@@ -125,8 +125,8 @@ def calibrate(filename):
     delta_f = abs(transition_1to0 - transition_1to2)
     delta_f_err = np.sqrt(transition_1to0_err ** 2 + transition_1to2_err ** 2)
 
-    delta_t = abs(maxima[0] - maxima[2])
-    delta_t_err = np.sqrt(maxima_err[0] ** 2 + maxima_err[2] ** 2)
+    delta_t = abs(maxima[peak1] - maxima[peak2])
+    delta_t_err = np.sqrt(maxima_err[peak1] ** 2 + maxima_err[peak2] ** 2)
 
     # print(f"transition_1to0 = {transition_1to0} +- {transition_1to0_err} GHz")
     # print(f"transition_1to2 = {transition_1to2} +- {transition_1to2_err} GHz")
