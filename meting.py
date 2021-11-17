@@ -4,7 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from packages import nsp2exp
 
-calib, calib_err = nsp2exp.calibrate("metingen 15-11-21/ALL0001/F0001CH1.csv")
+calib, calib_err = nsp2exp.calibrate("ALL0001/F0001CH1.csv")
+
+function_gen = 10  # Hz
+function_gen_err = 0.03  # Hz
 
 
 def get_energy(filename):
@@ -35,6 +38,7 @@ def get_energy(filename):
 
 
 files = [
+    "metingen 15-11-21/ALL0001/F0001CH3.csv",
     "metingen 15-11-21/ALL0002/F0002CH3.csv",
     "metingen 15-11-21/ALL0003/F0003CH3.csv",
     "metingen 15-11-21/ALL0004/F0004CH3.csv",
@@ -52,4 +56,11 @@ files = [
     "metingen 15-11-21/ALL0016/F0016CH3.csv",
     "metingen 15-11-21/ALL0017/F0017CH3.csv",
 ]
-get_energy("metingen 15-11-21/ALL0002/F0002CH3.csv")
+
+energies = []
+energies_err = []
+
+for file in files:
+    E, E_err = get_energy(file)
+    energies.append(E)
+    energies_err.append(E_err)
