@@ -3,6 +3,9 @@ from lmfit import models
 import numpy as np
 import matplotlib.pyplot as plt
 
+fg_freq = 10  # Hz
+fg_freq_err = 0.03  # Hz
+
 
 def find_tops(filename, show_plot=False):
     """Finds peaks given filename of csv containing data.
@@ -59,7 +62,7 @@ def find_tops(filename, show_plot=False):
             # Error = distance centre value to the largest deviation
             err = max(peak) - minima_c[-1]
             if err == 0:
-                err = 0.00002
+                err = 0.00010
             minima_c_err.append(err)
             print(
                 f"[find_tops()] Found minimum at t = {minima_c[-1]} +- {minima_c_err[-1]} ms."
@@ -74,7 +77,7 @@ def find_tops(filename, show_plot=False):
             maxima_c.append(sum(peak) / (temp_count + 1))
             err = max(peak) - maxima_c[-1]
             if err == 0:
-                err = 0.00002
+                err = 0.00010
             maxima_c_err.append(err)
             print(
                 f"[find_tops()] Found maximum at t = {maxima_c[-1]} +- {maxima_c_err[-1]} ms."
@@ -134,8 +137,10 @@ def calibrate(filename):
     # print(f"delta_t = {delta_t} +- {delta_t_err} s")
 
     calib = delta_f / delta_t
-    calib_err = np.sqrt(
-        (delta_f_err / delta_t) ** 2 + (delta_f * delta_t_err / (delta_t ** 2)) ** 2
+    calib_err = calib * np.sqrt(
+        (delta_t_err / delta_t) ** 2
+        + (delta_f_err / delta_f) ** 2
+        + (fg_freq_err / fg_freq) ** 2
     )
 
     print(f"[calibrate()] calibration = {calib} +- {calib_err} GHz / s")

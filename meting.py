@@ -35,8 +35,8 @@ const_err = const * np.sqrt(
     (mu_0_err / mu_0) ** 2 + (mu_B_err / mu_B) ** 2 + (length_err / length) ** 2
 )
 
-function_gen = 10  # Hz
-function_gen_err = 0.03  # Hz
+fg_freq = 10  # Hz
+fg_freq_err = 0.03  # Hz
 
 
 def get_energy(filename, valley_index=-1, peak_index=-1):
@@ -66,7 +66,9 @@ def get_energy(filename, valley_index=-1, peak_index=-1):
 
     delta_E = calib * delta_t * h * 1e9
     delta_E_err = delta_E * np.sqrt(
-        (calib_err / calib) ** 2 + (delta_t_err / delta_t) ** 2
+        (calib_err / calib) ** 2
+        + (delta_t_err / delta_t) ** 2
+        + (fg_freq_err / fg_freq) ** 2
     )
 
     print(
@@ -99,6 +101,9 @@ current_df = pd.read_csv("stroommetingen.csv", delimiter=";")
 
 print(current_df)
 
+
+energies = []
+energies_err = []
 lin_vals = []
 lin_vals_err = []
 
@@ -113,6 +118,8 @@ valleys = [6, 2, 4, 3, 1, 0, 0, 1, 2, 0, 1, 1, 1, 1, 0, 1, 1]
 peaks = [3, 3, 3, 1, 1, 2, 0, 0, 2, 0, 0, 1, 1, 0, 0, 1, 0]
 for i in range(len(files)):
     energy, energy_err = get_energy(files[i], valleys[i], peaks[i])
+    energies.append(energy)
+    energies_err.append(energy_err)
     # LV = E / -const
     lin_val = energy / -const
     lin_val_err = lin_val * np.sqrt(
@@ -138,5 +145,34 @@ fit = model.fit(
     N=700,
 )
 print(fit.fit_report())
-fit.plot_fit()
+plt.errorbar(
+    x=current_df["current"],
+    xerr=current_df["current_err"],
+    y=lin_vals,
+    yerr=lin_vals_err,
+    fmt="o",
+)
+
+plt.plot([0, 1], [0, fit.params["N"].value])
+plt.xlim(0, 0.8)
+plt.ylim(0, 300)
+plt.xlabel("$I$ (A)")
+plt.ylabel("$E L / (2 g_F \mu_B \mu_0)$ ()")
+
+plt.show()
+plt.clf()
+
+plt.errorbar(
+    x=current_df["current"],
+    xerr=current_df["current_err"],
+    y=energies,
+    yerr=energies_err,
+    fmt="o",
+)
+
+plt.plot([0, 1], [0, -const * fit.params["N"].value])
+plt.xlim(0, 0.8)
+plt.ylim(0, 300)
+plt.xlabel("$I$ (A)")
+plt.ylabel("$E$ (J)")
 plt.show()
