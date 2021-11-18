@@ -31,6 +31,9 @@ mu_B = 9.274009994e-24
 mu_B_err = 0.000000057e-24
 
 const = 2 * g_F * mu_0 * mu_B / length
+const_err = const * np.sqrt(
+    (mu_0_err / mu_0) ** 2 + (mu_B_err / mu_B) ** 2 + (length_err / length) ** 2
+)
 
 function_gen = 10  # Hz
 function_gen_err = 0.03  # Hz
@@ -96,8 +99,8 @@ current_df = pd.read_csv("stroommetingen.csv", delimiter=";")
 
 print(current_df)
 
-energies = []
-energies_err = []
+lin_vals = []
+lin_vals_err = []
 
 # manual
 # for file in files:
@@ -110,22 +113,28 @@ valleys = [6, 2, 4, 3, 1, 0, 0, 1, 2, 0, 1, 1, 1, 1, 0, 1, 1]
 peaks = [3, 3, 3, 1, 1, 2, 0, 0, 2, 0, 0, 1, 1, 0, 0, 1, 0]
 for i in range(len(files)):
     energy, energy_err = get_energy(files[i], valleys[i], peaks[i])
-    energies.append(energy)
-    energies_err.append(energy_err)
+    # LV = E / -const
+    lin_val = energy / -const
+    lin_val_err = lin_val * np.sqrt(
+        (energy_err / energy) ** 2 + (const_err / const) ** 2
+    )
 
-energies = np.array(energies)
-energies_err = np.array(energies_err)
+    lin_vals.append(lin_val)
+    lin_vals_err.append(lin_val_err)
 
-energy_func = lambda I, N: -const * I * N
+lin_vals = np.array(lin_vals)
+lin_vals_err = np.array(lin_vals_err)
+
+lin_func = lambda I, N: I * N
 
 print(const)
 
-model = models.Model(energy_func)
+model = models.Model(lin_func)
 
 fit = model.fit(
-    data=energies,
+    data=lin_vals,
     I=current_df["current"],
-    weights=1 / energies_err,
+    weights=1 / lin_vals_err,
     N=700,
 )
 print(fit.fit_report())
