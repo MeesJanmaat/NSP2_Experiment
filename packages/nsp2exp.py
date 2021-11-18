@@ -7,7 +7,7 @@ fg_freq = 10  # Hz
 fg_freq_err = 0.03  # Hz
 
 
-def find_tops(filename, show_plot=False):
+def find_tops(filename, show_plot=False, log=False):
     """Finds peaks given filename of csv containing data.
 
     Args:
@@ -64,9 +64,10 @@ def find_tops(filename, show_plot=False):
             if err == 0:
                 err = 0.00010
             minima_c_err.append(err)
-            print(
-                f"[find_tops()] Found minimum at t = {minima_c[-1]} +- {minima_c_err[-1]} ms."
-            )
+            if log:
+                print(
+                    f"[find_tops()] Found minimum at t = {minima_c[-1]} +- {minima_c_err[-1]} s."
+                )
             temp_count = -1
         temp_count += 1
 
@@ -79,9 +80,11 @@ def find_tops(filename, show_plot=False):
             if err == 0:
                 err = 0.00010
             maxima_c_err.append(err)
-            print(
-                f"[find_tops()] Found maximum at t = {maxima_c[-1]} +- {maxima_c_err[-1]} ms."
-            )
+
+            if log:
+                print(
+                    f"[find_tops()] Found maximum at t = {maxima_c[-1]} +- {maxima_c_err[-1]} s."
+                )
             temp_count = -1
         temp_count += 1
 
@@ -110,25 +113,31 @@ def calibrate(filename):
             calib_err (float): calibration value error in GHz/s or MHz/ms"""
     minima, minima_err, maxima, maxima_err = find_tops(filename, True)
 
-    peak1 = int(input("Type the number of the peak that corresponds to F=1 ---> F=0: "))
-    peak2 = int(input("Type the number of the peak that corresponds to F=1 ---> F=2: "))
-
-    # F = 1 --> F = 0
-    transition_1to0 = 4.271676631815181 + 384230.4844685 - 0.3020738
-    transition_1to0_err = np.sqrt(
-        0.00000000000000056 ** 2 + 0.000000062 ** 2 + 0.000000088 ** 2
+    peak1 = int(input("Type the number of the peak that corresponds to F=2 ---> F=3: "))
+    peak2 = int(
+        input("Type the number of the peak that corresponds to F=2 ---> F=2.5: ")
     )
 
-    # F = 1 --> F = 2
-    transition_1to2 = 4.271676631815181 + 384230.4844685 - 0.0729112
-    transition_1to2_err = np.sqrt(
-        0.00000000000000056 ** 2 + 0.000000062 ** 2 + 0.000000032 ** 2
+    # F = 2 --> F = 3
+    transition_2to3 = 384230.4844685 - 2.563005979089109 + 0.1937407
+    transition_2to3_err = np.sqrt(
+        0.000000062 ** 2 + 0.000000000000034 ** 2 + 0.0000046 ** 2
     )
 
-    delta_f = abs(transition_1to0 - transition_1to2)
-    delta_f_err = np.sqrt(transition_1to0_err ** 2 + transition_1to2_err ** 2)
+    # F = 2 --> F = 2.5
+    transition_2to25 = 384230.4844685 - 2.563005979089109 + (0.1937407 - 0.0729112) / 2
+    transition_2to25_err = np.sqrt(
+        0.000000062 ** 2
+        + 0.000000000000034 ** 2
+        + (0.0000090 / 2) ** 2
+        + (0.0000032 / 2) ** 2
+    )
+
+    delta_f = abs(transition_2to3 - transition_2to25)
+    delta_f_err = np.sqrt(transition_2to3_err ** 2 + transition_2to25_err ** 2)
 
     delta_t = abs(maxima[peak1] - maxima[peak2])
+    print(delta_t)
     delta_t_err = np.sqrt(maxima_err[peak1] ** 2 + maxima_err[peak2] ** 2)
 
     # print(f"transition_1to0 = {transition_1to0} +- {transition_1to0_err} GHz")
@@ -136,7 +145,7 @@ def calibrate(filename):
     # print(f"delta_f = {delta_f} +- {delta_f_err} GHz")
     # print(f"delta_t = {delta_t} +- {delta_t_err} s")
 
-    calib = delta_f / delta_t
+    calib = -delta_f / delta_t
     calib_err = calib * np.sqrt(
         (delta_t_err / delta_t) ** 2
         + (delta_f_err / delta_f) ** 2
