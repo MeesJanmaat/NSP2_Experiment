@@ -158,5 +158,11 @@ for i in range(-2, 3):
         N_values[(i, j)] = try_fit(i, j)
 
 print(N_values)
-plt.hist(N_values.values(), bins=25)
+counts, bins, bars = plt.hist(N_values.values(), bins=25)
 plt.show()
+
+bin_centers = []
+for i in range(len(bins) - 1):
+    bin_centers.append((bins[i] + bins[i + 1]) / 2)
+
+plt.scatter(counts, bin_centers)
