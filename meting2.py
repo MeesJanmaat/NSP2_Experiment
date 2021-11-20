@@ -112,18 +112,20 @@ valleys = [6, 2, 4, 3, 1, 0, 0, 1, 2, 0, 1, 1, 1, 1, 0, 1, 1]
 peaks = [3, 3, 3, 1, 1, 2, 0, 0, 2, 0, 0, 1, 1, 0, 0, 1, 0]
 for i in range(len(files)):
     energy, energy_err = get_energy(files[i], valleys[i], peaks[i])
-    energies.append(energy)
-    energies_err.append(energy_err)
+    energies.append(abs(energy))
+    energies_err.append(abs(energy_err))
 
 energies = np.array(energies)
 energies_err = np.array(energies_err)
+print(energies)
 
 
 def try_fit(m_Fl, m_Fr):
     print(f"[try_fit()] FITTING WITH VALUES m_F = {m_Fl}, m_F = {m_Fr}")
 
-    const = ((m_Fl - m_Fr) * g_F2 * mu_B * mu_0 / length) - (
-        (m_Fl + 1 - m_Fr + 1) * g_F3 * mu_B * mu_0 / length
+    const = abs(
+        ((m_Fr - m_Fl) * g_F2 * mu_B * mu_0 / length)
+        + ((m_Fl - m_Fr + 2) * g_F3 * mu_B * mu_0 / length)
     )
 
     const_err = const * np.sqrt(
@@ -146,8 +148,25 @@ def try_fit(m_Fl, m_Fr):
         N=700,
     )
     print(fit.fit_report())
-    # fit.plot_fit()
-    # plt.show()
+    if m_Fl == 2 and m_Fr == 2:
+        plt.errorbar(
+            x=current_df["current"],
+            xerr=current_df["current_err"],
+            y=lin_vals,
+            yerr=lin_vals_err,
+            fmt="o",
+            c="black",
+            ms=2,
+            capsize=2,
+            label="data",
+        )
+        plt.xlabel(r"$I_{\mathrm{spoel}}$ (A)")
+        plt.ylabel(r"$\frac{\ell \Delta E}{k \mu_B \mu_0}$", fontsize=18)
+        plt.plot([0, 0.8], [0, fit.params["N"].value], label="best fit")
+        plt.legend(loc="upper right")
+        plt.xlim(0, 0.8)
+        plt.ylim(0, 250)
+        plt.show()
 
     return fit.params["N"].value
 
@@ -158,7 +177,11 @@ for i in range(-2, 3):
         N_values[(i, j)] = try_fit(i, j)
 
 print(N_values)
-counts, bins, bars = plt.hist(N_values.values(), bins=25)
+counts, bins, bars = plt.hist(N_values.values(), bins=25, fc="aqua", ec="black")
+plt.xlim(150, 550)
+plt.ylim(0, 6)
+plt.xlabel(r"$N$")
+plt.ylabel("counts")
 plt.show()
 
 bin_centers = []

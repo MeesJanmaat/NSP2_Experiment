@@ -140,11 +140,6 @@ def calibrate(filename):
     print(delta_t)
     delta_t_err = np.sqrt(maxima_err[peak1] ** 2 + maxima_err[peak2] ** 2)
 
-    # print(f"transition_1to0 = {transition_1to0} +- {transition_1to0_err} GHz")
-    # print(f"transition_1to2 = {transition_1to2} +- {transition_1to2_err} GHz")
-    # print(f"delta_f = {delta_f} +- {delta_f_err} GHz")
-    # print(f"delta_t = {delta_t} +- {delta_t_err} s")
-
     calib = -delta_f / delta_t
     calib_err = calib * np.sqrt(
         (delta_t_err / delta_t) ** 2
