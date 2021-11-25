@@ -137,9 +137,9 @@ def try_fit(m_Fl, m_Fr):
         (energies_err / energies) ** 2 + (const_err / const) ** 2
     )
 
-    # remove first 2 and last 6 values
-    lin_vals = list(lin_vals[2:len(lin_vals) - 6])
-    lin_vals_err = list(lin_vals_err[2:len(lin_vals_err) - 6])
+    # remove first 2 values
+    lin_vals = list(lin_vals[2:])
+    lin_vals_err = list(lin_vals_err[2:])
 
     # combine duplicate current measurements 3,4 and 7,8 (in the worst possible way)
     lin_vals_err[2] = np.sqrt(lin_vals_err[2]**2 + lin_vals_err[3]**2)/2
@@ -166,14 +166,14 @@ def try_fit(m_Fl, m_Fr):
 
     fit = model.fit(
         data=lin_vals,
-        I=current_df["current"][2:len(current_df["current"]) - 6],
+        I=current_df["current"][2:],
         weights=1 / lin_vals_err,
         N=200,
     )
     print(fit.fit_report())
     if m_Fl == 2 and m_Fr == 2:
         plt.errorbar(
-            x=current_df["current"][2:len(current_df["current"]) - 6],
+            x=current_df["current"][2:],
             y=lin_vals,
             yerr=lin_vals_err,
             fmt="o",
@@ -187,7 +187,7 @@ def try_fit(m_Fl, m_Fr):
         plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], label="best fit")
         plt.xlim(0, 0.8)
         plt.ylim(0, 250)
-        plt.savefig("fit.png")
+        plt.savefig("fit.png", bbox_inches = "tight")
         plt.show()
 
     return fit.params["N"].value
