@@ -137,21 +137,43 @@ def try_fit(m_Fl, m_Fr):
         (energies_err / energies) ** 2 + (const_err / const) ** 2
     )
 
+    # remove first 2 and last 6 values
+    lin_vals = list(lin_vals[2:len(lin_vals) - 6])
+    lin_vals_err = list(lin_vals_err[2:len(lin_vals_err) - 6])
+
+    # combine duplicate current measurements 3,4 and 7,8 (in the worst possible way)
+    lin_vals_err[2] = np.sqrt(lin_vals_err[2]**2 + lin_vals_err[3]**2)/2
+    lin_vals[2] = (lin_vals[2] + lin_vals[3])/2
+    lin_vals_err[6] = np.sqrt(lin_vals_err[6]**2 + lin_vals_err[7]**2)/2
+    lin_vals[6] = (lin_vals[6] + lin_vals[7])/2
+
+    lin_vals.remove(lin_vals[3])
+    lin_vals_err.remove(lin_vals_err[3])
+    lin_vals.remove(lin_vals[7])
+    lin_vals_err.remove(lin_vals_err[7])
+    current_df.drop_duplicates(inplace=True)
+
+    lin_vals = np.array(lin_vals)
+    lin_vals_err = np.array(lin_vals_err)
+
     lin_func = lambda I, N: I * N
 
     model = models.Model(lin_func)
 
+    print(current_df)
+    print(lin_vals)
+    print(lin_vals_err)
+
     fit = model.fit(
         data=lin_vals,
-        I=current_df["current"],
+        I=current_df["current"][2:len(current_df["current"]) - 6],
         weights=1 / lin_vals_err,
-        N=700,
+        N=200,
     )
     print(fit.fit_report())
     if m_Fl == 2 and m_Fr == 2:
         plt.errorbar(
-            x=current_df["current"],
-            xerr=current_df["current_err"],
+            x=current_df["current"][2:len(current_df["current"]) - 6],
             y=lin_vals,
             yerr=lin_vals_err,
             fmt="o",
@@ -162,10 +184,10 @@ def try_fit(m_Fl, m_Fr):
         )
         plt.xlabel(r"$I_{\mathrm{spoel}}$ (A)")
         plt.ylabel(r"$\frac{\ell \Delta E}{k \mu_B \mu_0}$", fontsize=18)
-        plt.plot([0, 0.8], [0, fit.params["N"].value], label="best fit")
-        plt.legend(loc="upper right")
+        plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], label="best fit")
         plt.xlim(0, 0.8)
         plt.ylim(0, 250)
+        plt.savefig("fit.png")
         plt.show()
 
     return fit.params["N"].value
@@ -182,6 +204,7 @@ plt.xlim(150, 550)
 plt.ylim(0, 6)
 plt.xlabel(r"$N$")
 plt.ylabel("counts")
+plt.savefig("hist.png")
 plt.show()
 
 bin_centers = []
