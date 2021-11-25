@@ -137,54 +137,59 @@ def try_fit(m_Fl, m_Fr):
         (energies_err / energies) ** 2 + (const_err / const) ** 2
     )
 
-    # remove first 2 values
-    lin_vals = list(lin_vals[2:])
-    lin_vals_err = list(lin_vals_err[2:])
+    lin_vals = list(lin_vals)
+    lin_vals_err = list(lin_vals_err)
 
     # combine duplicate current measurements 3,4 and 7,8 (in the worst possible way)
-    lin_vals_err[2] = np.sqrt(lin_vals_err[2]**2 + lin_vals_err[3]**2)/2
-    lin_vals[2] = (lin_vals[2] + lin_vals[3])/2
-    lin_vals_err[6] = np.sqrt(lin_vals_err[6]**2 + lin_vals_err[7]**2)/2
-    lin_vals[6] = (lin_vals[6] + lin_vals[7])/2
+    lin_vals_err[4] = np.sqrt(lin_vals_err[4]**2 + lin_vals_err[5]**2)/2
+    lin_vals[4] = (lin_vals[4] + lin_vals[5])/2
+    lin_vals_err[8] = np.sqrt(lin_vals_err[8]**2 + lin_vals_err[9]**2)/2
+    lin_vals[8] = (lin_vals[8] + lin_vals[9])/2
 
-    lin_vals.remove(lin_vals[3])
-    lin_vals_err.remove(lin_vals_err[3])
-    lin_vals.remove(lin_vals[7])
-    lin_vals_err.remove(lin_vals_err[7])
+    lin_vals.remove(lin_vals[5])
+    lin_vals_err.remove(lin_vals_err[5])
+    lin_vals.remove(lin_vals[9])
+    lin_vals_err.remove(lin_vals_err[9])
     current_df.drop_duplicates(inplace=True)
 
-    lin_vals = np.array(lin_vals)
-    lin_vals_err = np.array(lin_vals_err)
+    # remove first 2 and last 6 values
+    lin_vals_filtered = np.array(lin_vals[2:len(lin_vals) - 6])
+    lin_vals_err_filtered = np.array(lin_vals_err[2:len(lin_vals_err) - 6])
 
     lin_func = lambda I, N: I * N
 
     model = models.Model(lin_func)
 
-    print(current_df)
-    print(lin_vals)
-    print(lin_vals_err)
-
     fit = model.fit(
-        data=lin_vals,
-        I=current_df["current"][2:],
-        weights=1 / lin_vals_err,
+        data=lin_vals_filtered,
+        I=current_df["current"][2:len(current_df["current"]) - 6],
+        weights=1 / lin_vals_err_filtered,
         N=200,
     )
     print(fit.fit_report())
+
     if m_Fl == 2 and m_Fr == 2:
         plt.errorbar(
-            x=current_df["current"][2:],
+            x=current_df["current"],
             y=lin_vals,
             yerr=lin_vals_err,
             fmt="o",
+            c="red",
+            ms=2,
+            capsize=2
+        )
+        plt.errorbar(
+            x=current_df["current"][2:len(current_df["current"]) - 6],
+            y=lin_vals_filtered,
+            yerr=lin_vals_err_filtered,
+            fmt="o",
             c="black",
             ms=2,
-            capsize=2,
-            label="data",
+            capsize=2
         )
         plt.xlabel(r"$I_{\mathrm{spoel}}$ (A)")
         plt.ylabel(r"$\frac{\ell \Delta E}{k \mu_B \mu_0}$", fontsize=18)
-        plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], label="best fit")
+        plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], color="orange")
         plt.xlim(0, 0.8)
         plt.ylim(0, 250)
         plt.savefig("fit.png", bbox_inches = "tight")
