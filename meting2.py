@@ -140,6 +140,10 @@ def try_fit(m_Fl, m_Fr):
     lin_vals = list(lin_vals)
     lin_vals_err = list(lin_vals_err)
 
+    lin_func = lambda I, N: I * N
+
+    model = models.Model(lin_func)
+
     # combine duplicate current measurements 3,4 and 7,8 (in the worst possible way)
     lin_vals_err[4] = np.sqrt(lin_vals_err[4]**2 + lin_vals_err[5]**2)/2
     lin_vals[4] = (lin_vals[4] + lin_vals[5])/2
@@ -152,23 +156,30 @@ def try_fit(m_Fl, m_Fr):
     lin_vals_err.remove(lin_vals_err[9])
     current_df.drop_duplicates(inplace=True)
 
-    # remove first 2 and last 6 values
-    lin_vals_filtered = np.array(lin_vals[2:len(lin_vals) - 6])
-    lin_vals_err_filtered = np.array(lin_vals_err[2:len(lin_vals_err) - 6])
+    # remove first 1 and last 9 values if one of m_F will end up at 1, 0 or -1
+    if m_Fl == -2 or m_Fl == -1 or m_Fl == 0 or m_Fr == 0 or m_Fr == 1 or m_Fr == 2:
+        lin_vals_filtered = np.array(lin_vals[1:len(lin_vals) - 9])
+        lin_vals_err_filtered = np.array(lin_vals_err[1:len(lin_vals_err) - 9])
+        fit = model.fit(
+            data=lin_vals_filtered,
+            I=current_df["current"][1:len(current_df["current"]) - 9],
+            weights=1 / lin_vals_err_filtered,
+            N=200,
+        )
+    # otherwise remove only the first
+    else:
+        lin_vals_filtered = np.array(lin_vals[1:])
+        lin_vals_err_filtered = np.array(lin_vals_err[1:])
+        fit = model.fit(
+            data=lin_vals_filtered,
+            I=current_df["current"][1:],
+            weights=1 / lin_vals_err_filtered,
+            N=200,
+        )
 
-    lin_func = lambda I, N: I * N
-
-    model = models.Model(lin_func)
-
-    fit = model.fit(
-        data=lin_vals_filtered,
-        I=current_df["current"][2:len(current_df["current"]) - 6],
-        weights=1 / lin_vals_err_filtered,
-        N=200,
-    )
     print(fit.fit_report())
 
-    if m_Fl == 2 and m_Fr == 2:
+    if m_Fl == 2 and m_Fr == 0:
         plt.errorbar(
             x=current_df["current"],
             y=lin_vals,
@@ -179,7 +190,7 @@ def try_fit(m_Fl, m_Fr):
             capsize=2
         )
         plt.errorbar(
-            x=current_df["current"][2:len(current_df["current"]) - 6],
+            x=current_df["current"][1:len(current_df["current"]) - 9],
             y=lin_vals_filtered,
             yerr=lin_vals_err_filtered,
             fmt="o",
@@ -192,7 +203,34 @@ def try_fit(m_Fl, m_Fr):
         plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], color="orange")
         plt.xlim(0, 0.8)
         plt.ylim(0, 250)
-        plt.savefig("fit.png", bbox_inches = "tight")
+        plt.savefig("fit1.png", bbox_inches = "tight")
+        plt.show()
+
+    if m_Fl == 2 and m_Fr == -2:
+        plt.errorbar(
+            x=current_df["current"],
+            y=lin_vals,
+            yerr=lin_vals_err,
+            fmt="o",
+            c="red",
+            ms=2,
+            capsize=2
+        )
+        plt.errorbar(
+            x=current_df["current"][1:],
+            y=lin_vals_filtered,
+            yerr=lin_vals_err_filtered,
+            fmt="o",
+            c="black",
+            ms=2,
+            capsize=2
+        )
+        plt.xlabel(r"$I_{\mathrm{spoel}}$ (A)")
+        plt.ylabel(r"$\frac{\ell \Delta E}{k \mu_B \mu_0}$", fontsize=18)
+        plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], color="orange")
+        plt.xlim(0, 0.8)
+        plt.ylim(0, 250)
+        plt.savefig("fit2.png", bbox_inches = "tight")
         plt.show()
 
     return fit.params["N"].value
