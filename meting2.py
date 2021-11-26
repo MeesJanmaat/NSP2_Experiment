@@ -202,11 +202,11 @@ def try_fit(m_Fl, m_Fr):
         plt.ylabel(r"$\frac{\ell \Delta E}{k \mu_B \mu_0}$", fontsize=18)
         plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], color="orange")
         plt.xlim(0, 0.8)
-        plt.ylim(0, 250)
+        plt.ylim(0, 160)
         plt.savefig("fit1.png", bbox_inches = "tight")
         plt.show()
 
-    if m_Fl == 2 and m_Fr == -2:
+    if m_Fl == 1 and m_Fr == -1:
         plt.errorbar(
             x=current_df["current"],
             y=lin_vals,
@@ -229,20 +229,25 @@ def try_fit(m_Fl, m_Fr):
         plt.ylabel(r"$\frac{\ell \Delta E}{k \mu_B \mu_0}$", fontsize=18)
         plt.plot([0, 0.8], [0, 0.8 * fit.params["N"].value], color="orange")
         plt.xlim(0, 0.8)
-        plt.ylim(0, 250)
+        plt.ylim(0, 200)
         plt.savefig("fit2.png", bbox_inches = "tight")
         plt.show()
 
-    return fit.params["N"].value
+    return fit.params["N"].value, fit.params["N"].stderr
 
 
-N_values = {}
+N_values = []
+N_values_err = []
 for i in range(-2, 3):
     for j in range(-2, 3):
-        N_values[(i, j)] = try_fit(i, j)
+        N, N_err = try_fit(i, j)
+        N_values.append(N)
+        N_values_err.append(N_err)
 
-print(N_values)
-counts, bins, bars = plt.hist(N_values.values(), bins=25, fc="aqua", ec="black")
+N_values = np.array(N_values)
+N_values_err = np.array(N_values_err)
+
+counts, bins, bars = plt.hist(N_values, bins=25, fc="aqua", ec="black")
 plt.xlim(150, 550)
 plt.ylim(0, 6)
 plt.xlabel(r"$N$")
@@ -250,8 +255,7 @@ plt.ylabel("counts")
 plt.savefig("hist.png")
 plt.show()
 
-bin_centers = []
-for i in range(len(bins) - 1):
-    bin_centers.append((bins[i] + bins[i + 1]) / 2)
+avg_N = sum(N_values) / len(N_values)
+avg_N_err = np.sqrt(sum(N_values_err**2)) / len(N_values_err)
 
-plt.scatter(counts, bin_centers)
+print(f"N = {avg_N} +- {avg_N_err}")
