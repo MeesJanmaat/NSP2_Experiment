@@ -256,6 +256,6 @@ plt.savefig("hist.png")
 plt.show()
 
 avg_N = sum(N_values) / len(N_values)
-avg_N_err = np.sqrt(sum(N_values_err**2)) / len(N_values_err)
+avg_N_err = np.sqrt(sum((N_values - avg_N)**2) / (len(N_values) - 1))
 
 print(f"N = {avg_N} +- {avg_N_err}")
